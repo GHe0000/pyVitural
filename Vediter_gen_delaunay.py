@@ -71,7 +71,7 @@ def drawDots():
         glColor3f(1.0,0.0,0.0)
         glBegin(GL_POINTS)
         for p in Vertices:
-            glVertex4f(*p)
+            glVertex2f(*p)
         glEnd()
 
 def drawDelaunay():
@@ -83,6 +83,7 @@ while not glfw.window_should_close(window):
     glClearColor(0,0,0,0)
     glClear(GL_COLOR_BUFFER_BIT)
     drawLayers()
+    drawDots()
     glfw.swap_buffers(window)
 
 
