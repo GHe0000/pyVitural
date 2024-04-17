@@ -5,9 +5,11 @@ from OpenGL.GLU import *
 import glfw
 
 def draw_triangle(vertices):
-    glBegin(GL_TRIANGLES)
+    glPointSize(5)
+    glColor3f(0,1,0)
+    glBegin(GL_POINTS)
     for vertex in vertices:
-        glVertex3fv(vertex)
+        glVertex3f(*vertex)
     glEnd()
 
 def main():
@@ -44,6 +46,8 @@ def main():
 
 def mouse_callback(window, xpos, ypos):
     global vertices
+    print("Pos")
+    print(xpos,ypos)
     width, height = glfw.get_framebuffer_size(window)
     x = (xpos / width) * 2 - 1
     y = (ypos / height) * 2 - 1
