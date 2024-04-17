@@ -23,38 +23,105 @@ def initWindow(v_size=(512,512)):
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
     return window
 
+def command(cmd):
+    if cmd == "l":
+        print("所有图层:")
+        for layer in Layers:
+            print(layer.name)
+    else:
+        print("[CMD]未找到命令")
+
+selectedVertex = None
 def mouseCallback(window, button, action, mods):
     global Vertices
+    global selectedVertex
+    global isMove
+    global haveDelaunay
     if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
         xpos, ypos = glfw.get_cursor_pos(window)
         width, height = glfw.get_framebuffer_size(window)
         x = (xpos / width) * 2 - 1
         y = (ypos / height) * 2 - 1
         y = -y
-        print("Add:"+str(x)+"/"+str(y))
-        Vertices.append((x, y))
+        if editerType == 1:
+            print("Add:"+str(x)+"/"+str(y))
+            Vertices.append((x, y))
+            haveDelaunay = 0
+        if editerType == 2 and isMove == 0:
+            minDistance = 0.1
+            selectedVertex = None
+            for i, vertex in enumerate(Vertices):
+                distance = np.linalg.norm(np.array([x, y]) - np.array(vertex[:2]))
+                if distance < minDistance:
+                    minDistance = distance
+                    selectedVertex = i
+        if editerType == 2 and isMove == 1:
+            if selectedVertex == None:
+                print("未选点")
+            else:
+                Vertices[selectedVertex] = [x,y]
+                haveDelaunay = 0
+            isMove = 0
 
+editerType = 1
+isMove = 0
 def keyCallback(window, key, scancode, action, mods):
     global Vertices
+    global triDelaunay
+    global haveDelaunay
+    global editerType
+    global selectedVertex
+    global isMove
+
+    if key == glfw.KEY_1 and (mods & glfw.MOD_CONTROL) != 0 and action == glfw.PRESS:
+        editerType = 1
+        haveDelaunay = 0
+        selectedVertex = None
+        print("[Mode]添加节点模式")
+    if key == glfw.KEY_2 and (mods & glfw.MOD_CONTROL) != 0 and action == glfw.PRESS:
+        editerType = 2
+        print("[Mode]编辑节点模式")
+    if key == glfw.KEY_0 and (mods & glfw.MOD_CONTROL) != 0 and action == glfw.PRESS:
+        editerType = 0
+        print("[Mode]命令行输入")
+        cmd = input("?:")
+        command(cmd)
+        editerType = 1
+        print("[Mode]添加节点模式")
     # Ctrl-Z
-    if key == glfw.KEY_Z and (mods & glfw.MOD_CONTROL) != 0:
-        if action == glfw.PRESS:
+    if key == glfw.KEY_Z and (mods & glfw.MOD_CONTROL) != 0 and action == glfw.PRESS:
+        if editerType == 1:
             if Vertices == []:
                 print("[Ctrl-Z]列表中已经没有点，无法撤回")
             else:
                 print("[Ctrl-Z]撤回列表中的最后一个点")
                 Vertices.pop()
+                haveDelaunay = 0
     # Enter
     if key == glfw.KEY_ENTER and action == glfw.PRESS:
-        if len(Vertices) < 3:
-            print("[Enter]点数量不够，无法计算三角划分")
-        else:
-            print("[Enter]开始计算三角划分")
-            print(np.array(Vertices))
-            tri = Delaunay(np.array(Vertices))
-            print(tri.simplices)
-
-
+        if editerType == 1 or editerType == 2:
+            if len(Vertices) < 3:
+                print("[Enter]点数量不够，无法计算三角划分")
+            else:
+                print("[Enter]开始计算三角划分")
+                tri = Delaunay(np.array(Vertices))
+                triDelaunay = tri.simplices
+                haveDelaunay = 1
+                print("[Enter]计算结束")
+                #print(triDelaunay.type)
+    if editerType == 2:
+        if key == glfw.KEY_M and action == glfw.PRESS:
+            if isMove == 0:
+                isMove = 1
+            else:
+                isMove = 0
+        if key == glfw.KEY_D and action == glfw.PRESS:
+            if selectedVertex == None:
+                print("未选点")
+            else:
+                Vertices.pop(selectedVertex)
+                haveDelaunay = 0
+                selectedVertex = None
 
 def drawLayers():
     for layer in Layers:
@@ -81,6 +148,16 @@ def drawDots():
         for p in Vertices:
             glVertex2f(*p)
         glEnd()
+        if selectedVertex is not None and isMove == 0:
+            glColor3f(0,0,1)
+            glBegin(GL_POINTS)
+            glVertex2f(*Vertices[selectedVertex])
+            glEnd()
+        if selectedVertex is not None and isMove == 1:
+            glColor3f(0,1,1)
+            glBegin(GL_POINTS)
+            glVertex2f(*Vertices[selectedVertex])
+            glEnd()
 
 def drawTestDot(x,y,z):
     glPointSize(5)
@@ -89,8 +166,15 @@ def drawTestDot(x,y,z):
     glVertex4f(x,y,z,1)
     glEnd()
 
+haveDelaunay = 0
 def drawDelaunay():
-    return 0
+    if haveDelaunay != 0:
+        glColor3f(1, 0, 0)
+        for tri in triDelaunay:
+            glBegin(GL_LINE_LOOP)
+            for vertex in tri:
+                glVertex2f(*Vertices[vertex])
+            glEnd()
 
 window = initWindow()
 glfw.set_mouse_button_callback(window, mouseCallback)
@@ -118,48 +202,8 @@ while not glfw.window_should_close(window):
     glEnable(GL_BLEND)
     drawLayers()
     glDisable(GL_BLEND)
+    drawDelaunay()
     drawDots()
     drawTestDot(0,0,0) # 原点
     glfw.swap_buffers(window)
 
-"""
-
-# 顶点数据
-vertices = []
-def mouse_button_callback(window, button, action, mods):
-    if button == glfw.MOUSE_BUTTON_LEFT and action == glfw.PRESS:
-        x, y = glfw.get_cursor_pos(window)
-        print("Add:"+str(x)+"/"+str(y))
-        vertices.append((x, y))
-glfw.set_mouse_button_callback(window, mouse_button_callback)
-
-while not glfw.window_should_close(window):
-    glfw.poll_events()
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glLoadIdentity()
-
-    # 绘制图片
-    glBegin(GL_QUADS)
-    glEnd()
-
-    # 绘制顶点
-    glColor3f(1, 1, 1)
-    glBegin(GL_POINTS)
-    for vertex in vertices:
-        glVertex2f(*vertex)
-    glEnd()
-
-    # 检查是否按下回车键
-    if glfw.get_key(window, glfw.KEY_ENTER) == glfw.PRESS:
-        if len(vertices) >= 3:
-            tri = Delaunay(np.array(vertices))
-            glColor3f(1, 0, 0)
-            glBegin(GL_TRIANGLES)
-            for simplex in tri.simplices:
-                for vertex in simplex:
-                    glVertex2f(*vertices[vertex])
-            glEnd()
-    glfw.swap_buffers(window)
-glfw.terminate()
-"""
