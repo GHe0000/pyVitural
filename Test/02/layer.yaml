@@ -1,0 +1,35 @@
+body:
+  bbox:
+  - 377
+  - 448
+  - 645
+  - 1024
+  path: ./Test/02/body.npy
+face:
+  bbox:
+  - 351
+  - 241
+  - 670
+  - 560
+  path: ./Test/02/face.npy
+l_eye:
+  bbox:
+  - 444
+  - 358
+  - 461
+  - 419
+  path: ./Test/02/l_eye.npy
+mouth:
+  bbox:
+  - 462
+  - 461
+  - 550
+  - 495
+  path: ./Test/02/mouth.npy
+r_eye:
+  bbox:
+  - 550
+  - 358
+  - 567
+  - 419
+  path: ./Test/02/r_eye.npy

@@ -12,6 +12,8 @@ class LayerInEditer:
         self.z = z
         self.npdata = npdata
         self.texture, q, w = self.genTexture()
+        self.vertices = None
+        self.delaunay = None
 
         a,b,c,d = bbox
 
@@ -33,7 +35,7 @@ class LayerInEditer:
         width, height = texture.shape[:2]
         texture_num = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_num)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_FLOAT, texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
         glGenerateMipmap(GL_TEXTURE_2D)
 
@@ -44,8 +46,9 @@ class LayerInEditer:
 
 # 正式使用的 Layer 类（使用 Delaunay 三角划分）
 class Layer:
-    def __init__(self, name, delaunay ,npdata):
+    def __init__(self, name, vertices, delaunay ,npdata):
         self.name = name # 名字
+        self.vertices = vertices # 顶点位置（使用PSD座标）
         self.delaunay = delaunay # Delaunay 三角分割
         self.npdata = npdata # 图层 npdata 数据
         self.isVisual = 1 # 是否可见
@@ -61,7 +64,7 @@ class Layer:
         width, height = texture.shape[:2]
         texture_num = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_num)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_FLOAT, texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
         glGenerateMipmap(GL_TEXTURE_2D)
 
