@@ -12,11 +12,13 @@ class LayerInEditer:
         self.z = z
         self.npdata = npdata
         self.texture, q, w = self.genTexture()
-        self.vertices = None
-        self.delaunay = None
+        self.qw = (q,w)
+        self.vertices = np.empty(shape=(0,8))
+        self.delaunay = np.empty(shape=(0,3))
 
         a,b,c,d = bbox
-
+        # p1 p2
+        # p4 p3
         p1 = [a, b, z, 1, 0, 0, 0, 1]
         p2 = [a, d, z, 1, w, 0, 0, 1]
         p4 = [c, b, z, 1, 0, q, 0, 1]
@@ -48,8 +50,15 @@ class LayerInEditer:
 class Layer:
     def __init__(self, name, vertices, delaunay ,npdata):
         self.name = name # 名字
-        self.vertices = vertices # 顶点位置（使用PSD座标）
-        self.delaunay = delaunay # Delaunay 三角分割
+        # 顶点位置参数
+        # 应该传入一个 Numpy 数组，每一行为一个节点
+        # 前4个参数为顶点的四维齐次座标(x,y,z,w)(使用PSD座标系)
+        # 后4个参数为Texture的四维齐次座标(w,q,0,1)
+        # Texture齐次座标中w,q为(0,1)
+        self.vertices = vertices
+        # 原始的顶点位置参数，同上，但不会修改
+        self.originalVertices = vertices
+        self.delaunay = delaunay # Delaunay 三角分割（应该是一个 Numpy 数组）
         self.npdata = npdata # 图层 npdata 数据
         self.isVisual = 1 # 是否可见
         self.texture = self.genTexture() # 纹理编号
